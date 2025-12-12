@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: christmas-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+  
+  backend:
+      build:
+        context: ./backend
+      container_name: christmas-backend
+      env_file:
+        - .env
+      depends_on:
+        - db
+  
+  frontend:
+    build:
+      context: ./frontend
+    container_name: christmas-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
