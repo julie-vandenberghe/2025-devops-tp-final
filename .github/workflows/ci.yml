@@ -4,7 +4,7 @@ name: CI
 
 permissions:
   actions: read
-  contents: read
+  contents: write
 
 # Event that triggers the workflow
 on:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Run tests
         run: npm run test
-        
+
       - name: Build frontend
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
