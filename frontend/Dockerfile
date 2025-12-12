@@ -36,3 +36,6 @@ RUN sed -i "s#BACKEND_URL#${BACKEND_URL}#g" /etc/nginx/conf.d/default.conf
 
 # Exposer le port 80
 EXPOSE 80
+
+CMD sh -c "envsubst '\$BACKEND_URL' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf.tmp && mv /etc/nginx/conf.d/default.conf.tmp /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+# Injecte la valeur de BACKEND_URL dans la conf Nginx au démarrage puis lance le serveur
