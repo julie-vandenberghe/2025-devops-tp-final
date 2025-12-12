@@ -1,6 +1,8 @@
 # Metadata
 name: CI
-# Steps for CI : tests → build img Docker → doc Storybook
+# Steps for CI : 
+# - frontend : tests → build img Docker → doc Storybook
+# - backend : tests → build img Docker
 
 permissions:
   actions: read
@@ -103,6 +105,27 @@ jobs:
           publish_dir: frontend/storybook-static
           destination_dir: docs #pour que ce soit mis dans une sous-page de github pages
   
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-node@v6
+        with:
+          go-version: '1.23'
+
+      - name: Install dependencies
+        run: go mod download
+      
+      - name: Run tests
+        run: go test ./...
+
+
   backend-build-and-push:
     runs-on: ubuntu-latest
 
