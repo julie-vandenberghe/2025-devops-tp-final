@@ -31,6 +31,9 @@ COPY ./localhost.conf /etc/nginx/conf.d/default.conf
 
 #RUN sed -i "s#BACKEND_URL#${BACKEND_URL}#g" /etc/nginx/conf.d/default.conf
 
+# On installe le module SSL dans l'img Alpine
+RUN apk add --no-cache openssl
+
 # Passer à l'utilisateur non-root
 #Since 1.17.0, both alpine- and debian-based images variants use the same user and group ids to drop the privileges for worker processes
 
