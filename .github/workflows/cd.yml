@@ -1,0 +1,31 @@
+# Metadata
+name: CD
+# Steps for CD : 
+# - frontend : Deploy on Render
+# - backend : Deploy on Render
+
+permissions:
+  actions: read
+  contents: read
+
+# Event that triggers the workflow
+on:
+  workflow_run:
+    workflows: ["CI"] 
+    types:
+      - completed
+
+# Define the jobs
+jobs:
+  frontend-deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_FRONTEND_SERVICE_ID }}
+        run: |
+          curl -X POST "https://api.render.com/v1/services/${RENDER_SERVICE_FRONTEND_ID}/deploys" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json"
