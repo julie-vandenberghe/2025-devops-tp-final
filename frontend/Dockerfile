@@ -19,7 +19,7 @@ RUN npm run build
 # ---------- Étape 2 : execution ----------
 FROM nginx:alpine AS runner
 
-#ENV BACKEND_URL=http://backend:8080/api/
+ENV BACKEND_URL=http://backend:8080/api/
 
 WORKDIR /app
 

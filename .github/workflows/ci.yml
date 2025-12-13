@@ -45,11 +45,6 @@ jobs:
       - name: Run tests
         run: npm run test
 
-      - name: Build frontend
-        env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-        run: npm run build
-
   frontend-build-and-push:
     #if: github.ref == 'refs/heads/main'
     needs: frontend-tests
@@ -67,16 +62,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3. Build image
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/2025-devops-frontend:main -f frontend/Dockerfile frontend
-        # -f = chemin vers le Dockerfile à utiliser
-        # frontend = contexte de build
-        # pour changer d'env (écraser celui défini par défaut dans le dockerfile), il est possible d'ajouter après "docker build" : \ --build-arg BACKEND_URL=http://backend:8080/api/ \
+      - name: Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/2025-devops-frontend:main
+          build-args: |
+            BACKEND_URL=${{ secrets.BACKEND_URL }}
 
-      # 4. Push image to Docker Hub
-      - name: Push Docker image
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/2025-devops-frontend:main
 
   frontend-docs:
     runs-on: ubuntu-latest
