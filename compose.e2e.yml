@@ -4,7 +4,7 @@ services:
     container_name: christmas-db
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.e2e
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,7 +18,7 @@ services:
         context: ./backend
       container_name: christmas-backend
       env_file:
-        - .env
+        - .env.e2e
       depends_on:
         db:
           condition: service_healthy
