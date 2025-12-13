@@ -1,0 +1,156 @@
+# Metadata
+name: CI
+# Steps for CI : 
+# - frontend : tests → build img Docker → doc Storybook
+# - backend : tests → build img Docker
+
+permissions:
+  actions: read
+  contents: write
+
+# Event that triggers the workflow
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Define the jobs
+jobs:
+  frontend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Install browser for Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+  frontend-build-and-push:
+    #if: github.ref == 'refs/heads/main'
+    needs: frontend-tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 3. Build image
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/2025-devops-frontend:main -f frontend/Dockerfile frontend
+        # -f = chemin vers le Dockerfile à utiliser
+        # frontend = contexte de build
+        # pour changer d'env (écraser celui défini par défaut dans le dockerfile), il est possible d'ajouter après "docker build" : \ --build-arg BACKEND_URL=http://backend:8080/api/ \
+
+      # 4. Push image to Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/2025-devops-frontend:main
+
+  frontend-docs:
+    runs-on: ubuntu-latest
+    needs: frontend-build-and-push
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: frontend/storybook-static
+          destination_dir: docs #pour que ce soit mis dans une sous-page de github pages
+  
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-node@v6
+        with:
+          go-version: '1.23'
+
+      - name: Install dependencies
+        run: go mod download
+      
+      - name: Run tests
+        run: go test ./...
+
+
+  backend-build-and-push:
+    needs: backend-tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 3. Build image
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/2025-devops-backend:main -f backend/Dockerfile backend
+        # -f = chemin vers le Dockerfile à utiliser
+        # backend = contexte de build
+        # pour changer d'env (écraser celui défini par défaut dans le dockerfile), il est possible d'ajouter après "docker build" : \ --build-arg BACKEND_URL=http://backend:8080/api/ \
+
+      # 4. Push image to Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/2025-devops-backend:main
+
