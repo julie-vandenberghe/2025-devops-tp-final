@@ -68,7 +68,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: 2025-devops-frontend:main
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/2025-devops-frontend:main
           build-args: |
             BACKEND_URL=${{ secrets.BACKEND_URL }}
 
